@@ -1,0 +1,26 @@
+{
+  "name": "fullstackopen-part4",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:ui": "@powershell -NoProfile -Command \"Remove-Item -Recurse -Force dist; cd 'C:/Users/saari/Kooditiedostot/Training/part1'; npm run build; Copy-Item dist -Recurse 'C:/Users/saari/Kooditiedostot/Training/Hello World'\"",
+    "deploy": "fly deploy",
+    "deploy:full": "npm run build:ui && npm run deploy",
+    "logs:prod": "fly logs"
+  },
+  "author": "Oliver Saari",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "mongoose": "^8.5.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
+}
