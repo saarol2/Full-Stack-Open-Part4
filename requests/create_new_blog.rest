@@ -1,0 +1,10 @@
+POST http://localhost:3003/api/blogs
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNhYXJvbDIiLCJpZCI6IjY2YWY3NTk2OGM0ZTIxNTA4NDM1ZTYwYiIsImlhdCI6MTcyMjc3NjA3Nn0.HrF1svR4F77FnRW1cchbvOcdOkWnmIYZoOwfUq35R-o
+
+{
+    "title": "blog request",
+    "author": "Oliver Saari",
+    "url": "oliverin_nettisivu",
+    "likes": 5000
+  }
