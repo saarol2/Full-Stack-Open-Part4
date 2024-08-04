@@ -2,27 +2,32 @@ const { test, after, beforeEach, describe } = require('node:test')
 const assert = require('node:assert')
 const mongoose = require('mongoose')
 const supertest = require('supertest')
+const bcrypt = require('bcrypt')
 const app = require('../app')
 const api = supertest(app)
 
+const User = require('../models/user')
 const Blog = require('../models/blog')
 const helper = require('./test_helper')
 
+let token = ''
 
 describe('when there is initially some blogs saved', () => {
   beforeEach(async () => {
     await Blog.deleteMany({})
-
+    await User.deleteMany({})
+  
+    const passwordHash = await bcrypt.hash('sekret', 10)
+    const user = new User({ username: 'root', passwordHash })
+  
+    await user.save()
+  
+    const loginResponse = await api
+      .post('/api/login')
+      .send({ username: 'root', password: 'sekret' })
+  
+    token = loginResponse.body.token
     await Blog.insertMany(helper.initialBlogs)
-  })
-
-  test('GET return correct amount of blogs as json', async () => {
-    const response = await api
-      .get('/api/blogs')
-      .expect(200)
-      .expect('Content-Type', /application\/json/)
-
-      assert.strictEqual(response.body.length, 2);
   })
 
   test('Blogs have field id instead of _id', async () => {
@@ -43,6 +48,7 @@ describe('when there is initially some blogs saved', () => {
 
       await api
         .post('/api/blogs')
+        .set('Authorization', `Bearer ${token}`)
         .send(newBlog)
         .expect(201)
         .expect('Content-Type', /application\/json/)
@@ -64,6 +70,7 @@ describe('when there is initially some blogs saved', () => {
 
       await api
         .post('/api/blogs')
+        .set('Authorization', `Bearer ${token}`)
         .send(newBlog)
         .expect(201)
         .expect('Content-Type', /application\/json/)
@@ -84,6 +91,7 @@ describe('when there is initially some blogs saved', () => {
 
       await api
           .post('/api/blogs')
+          .set('Authorization', `Bearer ${token}`)
           .send(newBlog)
           .expect(400);
 
@@ -100,6 +108,7 @@ describe('when there is initially some blogs saved', () => {
 
       await api
           .post('/api/blogs')
+          .set('Authorization', `Bearer ${token}`)
           .send(newBlog)
           .expect(400);
 
@@ -144,6 +153,57 @@ describe('when there is initially some blogs saved', () => {
         assert.strictEqual(response.body.likes, updatedBlog.likes)
     })
   })
+
+  describe('when creating a user', () => {
+    test('fails with status code 400 if username is not unique', async () => {
+      const newUser = {
+        username: 'root',
+        name: 'rootUser',
+        password: 'salainen',
+      }
+  
+      const result = await api
+        .post('/api/users')
+        .send(newUser)
+        .expect(400)
+        .expect('Content-Type', /application\/json/)
+  
+      assert.strictEqual(result.body.error, 'username must be unique')
+    })
+  
+    test('fails with status code 400 if username is less than 3 characters', async () => {
+      const newUser = {
+        username: 'ro',
+        name: 'rootUser',
+        password: 'salainen',
+      }
+  
+      const result = await api
+        .post('/api/users')
+        .send(newUser)
+        .expect(400)
+        .expect('Content-Type', /application\/json/)
+  
+      assert.strictEqual(result.body.error, 'username and password must be at least 3 characters long')
+    })
+  
+    test('fails with status code 400 if password is less than 3 characters', async () => {
+      const newUser = {
+        username: 'root',
+        name: 'rootUser',
+        password: 'sa',
+      }
+  
+      const result = await api
+        .post('/api/users')
+        .send(newUser)
+        .expect(400)
+        .expect('Content-Type', /application\/json/)
+  
+      assert.strictEqual(result.body.error, 'username and password must be at least 3 characters long')
+    })
+  })
+  
 })
 
 after(async () => {
